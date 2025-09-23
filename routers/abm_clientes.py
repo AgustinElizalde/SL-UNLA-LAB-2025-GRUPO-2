@@ -41,10 +41,32 @@ class ClienteUpdate(BaseModel):
 
 # ------------------- Endpoints -------------------
 
+#-------------------- Calculo de edad -------------
+def calcular_edad(fecha_nacimiento: date) -> int:
+    hoy = date.today()
+    return hoy.year - fecha_nacimiento.year - (
+        (hoy.month, hoy.day) < (fecha_nacimiento.month, fecha_nacimiento.day)
+    )
+
 # Crear cliente
 @router.post("/clientes")
 def crear_cliente(cliente: ClienteCreate, db: Session = Depends(get_db)):
     f = date.fromisoformat(cliente.fecha_nacimiento)
+
+    dni_existente = db.query(Cliente).filter(Cliente.dni == cliente.dni).first()
+    email_existente = db.query(Cliente).filter(Cliente.email == cliente.email).first()
+
+    if dni_existente:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Ya existe un cliente con el DNI {cliente.dni}"
+        )
+
+    if email_existente:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Ya existe un cliente con el mismo email {cliente.email}"
+        )
 
     nuevo = Cliente(
         nombre=cliente.nombre,
@@ -66,7 +88,8 @@ def crear_cliente(cliente: ClienteCreate, db: Session = Depends(get_db)):
         "dni": nuevo.dni,
         "telefono": nuevo.telefono,
         "fecha_nacimiento": str(nuevo.fecha_nacimiento),
-        "habilitado": nuevo.habilitado
+        "habilitado": nuevo.habilitado,
+        "edad": calcular_edad(nuevo.fecha_nacimiento)
     }
 
 # Listar todos los clientes
@@ -81,7 +104,8 @@ def listar_clientes(db: Session = Depends(get_db)):
             "dni": c.dni,
             "telefono": c.telefono,
             "fecha_nacimiento": str(c.fecha_nacimiento),
-            "habilitado": c.habilitado
+            "habilitado": c.habilitado,
+            "edad": calcular_edad(c.fecha_nacimiento)
         }
         for c in clientes
     ]
@@ -126,7 +150,8 @@ def actualizar_cliente(id: int, datos: ClienteUpdate, db: Session = Depends(get_
         "dni": cliente.dni,
         "telefono": cliente.telefono,
         "fecha_nacimiento": str(cliente.fecha_nacimiento),
-        "habilitado": cliente.habilitado
+        "habilitado": cliente.habilitado,
+        "edad": calcular_edad(cliente.fecha_nacimiento)
     }
 
 # Eliminar cliente
