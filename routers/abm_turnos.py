@@ -76,7 +76,7 @@ def obtener_turno(id: int):
     return {"id": t.id, "fecha": str(t.fecha), "hora": str(t.hora), "estado": t.estado, "cliente_id": t.cliente_id}
 
 # Actualizar turno
-@router.put("/turnos/{id}")
+@router.put("/turnos")
 def actualizar_turno(id: int, turno: TurnoUpdate, db: Session = Depends(get_db)):
     t = db.query(Turno).filter(Turno.id == id).first()
     if not t:
@@ -90,7 +90,7 @@ def actualizar_turno(id: int, turno: TurnoUpdate, db: Session = Depends(get_db))
     return t
 
 # Eliminar turno
-@router.delete("/turnos/{id}")
+@router.delete("/turnos")
 def eliminar_turno(id: int):
     db = next(get_db())
     t = db.query(Turno).filter(Turno.id == id).first()
